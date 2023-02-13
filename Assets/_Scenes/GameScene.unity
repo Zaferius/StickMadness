@@ -7026,7 +7026,7 @@ MonoBehaviour:
   - {fileID: 1555314038417624220}
   - {fileID: 8643509009270924670}
   - {fileID: 1916120876173407814}
-  UnUsedWeapons:
+  unUsedWeapons:
   - {fileID: 268267394}
   - {fileID: 1539761180}
   - {fileID: 1333851295}
