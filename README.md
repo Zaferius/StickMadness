@@ -1,3 +1,1 @@
-#<p align="center">
-  <img src="[Zombie1_reduce](https://user-images.githubusercontent.com/47734158/218519810-0a054d61-3de3-4780-bf95-b5f342e8df17.gif)" alt="animated" />
-</p>
+![Zombie1_reduce](https://user-images.githubusercontent.com/47734158/218562681-bcf112a7-0f01-4872-87df-4506f4d7a833.gif)
