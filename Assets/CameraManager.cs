@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Cinemachine;
 using UnityEngine;
 
-public class CameraManager : MonoBehaviour
+public sealed class CameraManager : MonoBehaviour
 {
     public CinemachineVirtualCamera playCam;
     public CinemachineTargetGroup playTargetGroup;
@@ -31,13 +31,12 @@ public class CameraManager : MonoBehaviour
         InstanceMethod();
     }
 
-    void Start()
+    private void Start()
     {
         playCamPerlin = playCam.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
         if (shakeTimer > 0)
         {
@@ -45,15 +44,7 @@ public class CameraManager : MonoBehaviour
             playCamPerlin.m_AmplitudeGain = Mathf.Lerp(startingIntensity, 0f, (1 - (shakeTimer / shakeTimerTotal)));
         }
 
-        if (GameManager.Instance.playerSpecial.nearestEnemy != null)
-        {
-            playTargetGroup.m_Targets[1].target = GameManager.Instance.playerSpecial.nearestEnemy;
-        }
-        else
-        {
-            playTargetGroup.m_Targets[1].target = null;
-        }
-        
+        playTargetGroup.m_Targets[1].target = GameManager.Instance.playerSpecial.nearestEnemy != null ? GameManager.Instance.playerSpecial.nearestEnemy : null;
     }
     
     public void ShakeCam(float amount, float time)

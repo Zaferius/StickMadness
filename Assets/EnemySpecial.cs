@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
-public class EnemySpecial : MonoBehaviour
+public sealed class EnemySpecial : MonoBehaviour
 {
     public enum EnemyType
     {
@@ -64,148 +64,162 @@ public class EnemySpecial : MonoBehaviour
     
     public float burningGoTime;
     public float burningGoTimer;
-    void Start()
+
+    private void Start()
     {
-        patrolTime = Random.Range(20, 25);
-        
-        startingHP = hp;
-        
-        defColor = bodyMeshRenderer.material.color;
-        defScale = transform.localScale;
-        
-        
-        
-        anim = GetComponent<Animator>();
-        aiPath = GetComponent<AIPath>();
-        destinationSetter = GetComponent<AIDestinationSetter>();
-        
-        TimeManager.Instance.transform.DOMoveX(0, 0.1f).OnComplete(() =>
-        {
-            GameManager.Instance.currentLevel.enemies.Add(transform);
-            // target = GameManager.Instance.playerSpecial.transform;
-            // destinationSetter.target = target;
-        });
-        
-        foreach (Rigidbody childRb in GetComponentsInChildren<Rigidbody>(true))
-        {
-            childRb.isKinematic = true;
-        }
-        
-        
-        foreach (Collider childCol in GetComponentsInChildren<Collider>(true))
-        {
-            childCol.enabled = false;
-        }
-
-        GetComponent<Collider>().enabled = true;
-        GetComponent<Rigidbody>().isKinematic = false;
-
-
-
+       CharSetup();
+       Ragdoll(false);
     }
     
     void Update()
     {
-        if (isAlive)
+        if (!isAlive) return;
+        if (burning)
         {
-            if (burning)
-            {
-                burningGoTimer -= 5 * Time.deltaTime;
-                burningHitTimer -= 5 * Time.deltaTime;
+            burningGoTimer -= 5 * Time.deltaTime;
+            burningHitTimer -= 5 * Time.deltaTime;
 
-                if (!burningParticle.isPlaying)
-                {
-                    burningParticle.Play();
-                }
+            if (!burningParticle.isPlaying)
+            {
+                burningParticle.Play();
+            }
                 
-                if (burningGoTimer <= 0)
-                { 
-                    burning = false;
-                    burningGoTimer = burningGoTime;
-                }
+            if (burningGoTimer <= 0)
+            { 
+                burning = false;
+                burningGoTimer = burningGoTime;
+            }
                 
-                if (burningHitTimer <= 0)
-                { 
-                    TakeDamage(burnDamage);
-                    burningHitTimer = burningHitTime;
-                }
-            }
-            else
-            {
-                if (burningParticle.isPlaying)
-                {
-                    burningParticle.Stop();
-                    burningHitTimer = burningHitTime;
-                    burningGoTimer = burningGoTime;
-                }
-            }
-            
-            
-            distanceToPlayer = (transform.position - GameManager.Instance.playerSpecial.transform.position).sqrMagnitude;
-        
-            if (distanceToPlayer <= 75 && enemyStance != EnemyStance.Chasing)
-            {
-                enemyStance = EnemyStance.Chasing;
-                StartChasing();
-            }
-            else if (distanceToPlayer > 125 && enemyStance == EnemyStance.Chasing)
-            {
-                FreeThink();
-                enemyStance = EnemyStance.Patrolling;
-            }
-        
-        
-        
-            if (enemyStance == EnemyStance.Patrolling)
-            {
-                patrolTimer -= Time.deltaTime * 5;
-                if (patrolTimer <= 0 || aiPath.reachedDestination)
-                {
-                    FreeThink();
-                }
-            }
-        
-            if (onMove)
-            {
-                switch (enemyType)
-                {
-                    case EnemyType.CommonZombie:
-                        anim.SetBool("ZombieWalk", true);
-                        break;
-                    case EnemyType.FastZombie:
-                        anim.SetBool("ZombieRun", true);
-                        break;
-                }
-            }
-            else
-            {
-                switch (enemyType)
-                {
-                    case EnemyType.CommonZombie:
-                        anim.SetBool("ZombieWalk", false);
-                        break;
-                    case EnemyType.FastZombie:
-                        anim.SetBool("ZombieRun", false);
-                        break;
-                }
-            }
-
-            if (hpBar)
-            {
-                hpImage.fillAmount = hp / startingHP;
-                hpBar.transform.LookAt(Camera.main.transform);
-
-                if (hpBarTimer < 0)
-                {
-                    hpBar.gameObject.SetActive(false);
-                }
-                else
-                {
-                    hpBarTimer -= Time.deltaTime * 10;
-                }
+            if (burningHitTimer <= 0)
+            { 
+                TakeDamage(burnDamage);
+                burningHitTimer = burningHitTime;
             }
         }
+        else
+        {
+            if (burningParticle.isPlaying)
+            {
+                burningParticle.Stop();
+                burningHitTimer = burningHitTime;
+                burningGoTimer = burningGoTime;
+            }
+        }
+            
+            
+        distanceToPlayer = (transform.position - GameManager.Instance.playerSpecial.transform.position).sqrMagnitude;
+        
+        switch (distanceToPlayer)
+        {
+            case <= 75 when enemyStance != EnemyStance.Chasing:
+                enemyStance = EnemyStance.Chasing;
+                StartChasing();
+                break;
+            case > 125 when enemyStance == EnemyStance.Chasing:
+                FreeThink();
+                enemyStance = EnemyStance.Patrolling;
+                break;
+        }
+        
+        
+        
+        if (enemyStance == EnemyStance.Patrolling)
+        {
+            patrolTimer -= Time.deltaTime * 5;
+            if (patrolTimer <= 0 || aiPath.reachedDestination)
+            {
+                FreeThink();
+            }
+        }
+        
+        if (onMove)
+        {
+            switch (enemyType)
+            {
+                case EnemyType.CommonZombie:
+                    anim.SetBool("ZombieWalk", true);
+                    break;
+                case EnemyType.FastZombie:
+                    anim.SetBool("ZombieRun", true);
+                    break;
+            }
+        }
+        else
+        {
+            switch (enemyType)
+            {
+                case EnemyType.CommonZombie:
+                    anim.SetBool("ZombieWalk", false);
+                    break;
+                case EnemyType.FastZombie:
+                    anim.SetBool("ZombieRun", false);
+                    break;
+            }
+        }
+
+        if (hpBar)
+        {
+            hpImage.fillAmount = hp / startingHP;
+            hpBar.transform.LookAt(Camera.main.transform);
+
+            if (hpBarTimer < 0)
+            {
+                hpBar.gameObject.SetActive(false);
+            }
+            else
+            {
+                hpBarTimer -= Time.deltaTime * 10;
+            }
+        }
+
+    }
+
+    private void CharSetup()
+    {
+        anim = GetComponent<Animator>();
+        aiPath = GetComponent<AIPath>();
+        destinationSetter = GetComponent<AIDestinationSetter>();
+        GetComponent<Collider>().enabled = true;
+        GetComponent<Rigidbody>().isKinematic = false;
+        patrolTime = Random.Range(20, 25);
+        startingHP = hp;
+        defColor = bodyMeshRenderer.material.color;
+        defScale = transform.localScale;
+        
+        TimeManager.Instance.transform.DOMoveX(0, 0.1f).OnComplete(() =>
+        {
+            GameManager.Instance.currentLevel.enemies.Add(transform);
+        });
       
+    }
+
+    private void Ragdoll(bool active)
+    {
+        if (active)
+        {
+            foreach (Rigidbody childRb in GetComponentsInChildren<Rigidbody>(true))
+            {
+                childRb.isKinematic = true;
+            }
+
+            foreach (Collider childCol in GetComponentsInChildren<Collider>(true))
+            {
+                childCol.enabled = false;
+            }
+        }
+        else
+        {
+            foreach (Rigidbody childRb in GetComponentsInChildren<Rigidbody>(true))
+            {
+                childRb.isKinematic = false;
+            }
+
+            foreach (Collider childCol in GetComponentsInChildren<Collider>(true))
+            {
+                childCol.enabled = true;
+            }
+        }
+       
     }
 
     private void FreeThink()
@@ -257,6 +271,7 @@ public class EnemySpecial : MonoBehaviour
     public void Burn()
     {
         burning = true;
+        //Burning>>>
     }
 
     private void StartChasing()
@@ -294,15 +309,7 @@ public class EnemySpecial : MonoBehaviour
             child.gameObject.layer = 7;
         }
         
-        foreach (Collider childCol in GetComponentsInChildren<Collider>(true))
-        {
-            childCol.enabled = true;
-        }
-        
-        foreach (Rigidbody childRb in GetComponentsInChildren<Rigidbody>(true))
-        {
-            childRb.isKinematic = false;
-        }
+        Ragdoll(false);
 
         isAlive = false;
         enemyStance = EnemyStance.Dead;

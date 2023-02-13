@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class GameManager : MonoBehaviour
+public sealed class GameManager : MonoBehaviour
 {
     #region Instance Method / GameState
     public static GameManager Instance;
@@ -42,22 +42,6 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         
-    }
-    
-    private void LateUpdate()
-    {
-        if (gameState == GameState.Play)
-        {
-           
-        }
-    }
-    
-    private void FixedUpdate()
-    {
-        if (gameState == GameState.Play)
-        {
-           
-        }
     }
     
     private void Update()

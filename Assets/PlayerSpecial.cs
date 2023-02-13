@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
-public class PlayerSpecial : MonoBehaviour
+public sealed class PlayerSpecial : MonoBehaviour
 {
     public Transform nearestEnemy;
     public float distance;
@@ -68,15 +68,10 @@ public class PlayerSpecial : MonoBehaviour
     
     void Update()
     {
-        if (playerIndicator)
-        {
-            playerIndicator.transform.parent = null;
-            playerIndicator.transform.localRotation = Quaternion.Euler(0,0,0);
-            playerIndicator.transform.position = Vector3.Lerp(playerIndicator.transform.position, new Vector3(transform.position.x, transform.position.y + 3, transform.position.z), Time.deltaTime * 35f);
-        }
-        
-        
-        
+       HandleIndicator();
+       HandleHPBar();
+       HandleCombat();
+       
         if (Input.GetMouseButtonDown(0))
         {
             if (speed < 0.1f)
@@ -85,14 +80,74 @@ public class PlayerSpecial : MonoBehaviour
             }
            
         }
+        
+      
+    }
 
-        if (hpBar)
+    private void FixedUpdate()
+    {
+        MeasureSpeed();
+        
+        if (Input.GetMouseButton(0))
         {
-            hpImage.fillAmount = hp / startingHP;
-            hpBar.transform.LookAt(Camera.main.transform);
+            HandleMovement();
+        }
+        else
+        {
+           PlayerStop();
+        }
+
+    }
+
+    private void HandleMovement()
+    {
+        moving = true;
+        ShootingAnimsSetter(false);
+        weaponHolster.currentUnUsedWeapon.gameObject.SetActive(true);
+        
+        rb.velocity = new Vector3(UIManager.Instance.fj.Horizontal * (moveForce), rb.velocity.y,
+            UIManager.Instance.fj.Vertical * (moveForce));
+
+        Vector3 direction = Vector3.forward * UIManager.Instance.fj.Vertical + Vector3.right * UIManager.Instance.fj.Horizontal;
+        rb.AddForce(direction * (moveForce) * Time.fixedDeltaTime, ForceMode.VelocityChange);
+            
+        var targetRotation = Quaternion.LookRotation(transform.forward);
+        transform.GetChild(0).rotation = Quaternion.Slerp(transform.GetChild(0).rotation, targetRotation, 50 * Time.deltaTime);
+
+        if (rb.velocity.magnitude > 0.5f)
+        {
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(new Vector3(rb.velocity.x, 0f, rb.velocity.z)), Time.deltaTime * 60);
+            anim.SetBool("Moving", true);
         }
         
+        if (rb.velocity.magnitude > 3)
+        {
+            canSmoke = true;
+        } else
+        {
+            canSmoke = false;
+        }
         
+        if (rb.velocity.magnitude > 1)
+        {
+            playableObjectThicked = false;
+               
+        }
+        
+    }
+
+    private void HandleIndicator()
+    {
+        if (playerIndicator)
+        {
+            playerIndicator.transform.parent = null;
+            playerIndicator.transform.localRotation = Quaternion.Euler(0,0,0);
+            playerIndicator.transform.position = Vector3.Lerp(playerIndicator.transform.position, new Vector3(transform.position.x, transform.position.y + 3, transform.position.z), Time.deltaTime * 35f);
+        }
+    }
+
+    private void HandleCombat()
+    {
         if(GameManager.Instance.currentLevel.enemies.Count > 0 && !playableObjectThicked)
         {
             FindNearestEnemy();
@@ -123,62 +178,22 @@ public class PlayerSpecial : MonoBehaviour
         {
             ShootingAnimsSetter(false);
         }
-        
     }
 
-    private void FixedUpdate()
+    private void HandleHPBar()
     {
-        MeasureSpeed();
-        
-        if (Input.GetMouseButton(0))
+        if (hpBar)
         {
-            moving = true;
-            
-            
-            ShootingAnimsSetter(false);
-            
-            weaponHolster.currentUnUsedWeapon.gameObject.SetActive(true);
-            
-            rb.velocity = new Vector3(UIManager.Instance.fj.Horizontal * (moveForce), rb.velocity.y,
-                UIManager.Instance.fj.Vertical * (moveForce));
-
-            Vector3 direction = Vector3.forward * UIManager.Instance.fj.Vertical + Vector3.right * UIManager.Instance.fj.Horizontal;
-            rb.AddForce(direction * (moveForce) * Time.fixedDeltaTime, ForceMode.VelocityChange);
-            
-            var targetRotation = Quaternion.LookRotation(transform.forward);
-            transform.GetChild(0).rotation = Quaternion.Slerp(transform.GetChild(0).rotation, targetRotation, 50 * Time.deltaTime);
-
-            if (rb.velocity.magnitude > 0.5f)
-            {
-                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(new Vector3(rb.velocity.x, 0f, rb.velocity.z)), Time.deltaTime * 60);
-                anim.SetBool("Moving", true);
-              
-            }
-
-            if (rb.velocity.magnitude > 1)
-            {
-                playableObjectThicked = false;
-               
-            }
-           
-
-            if (rb.velocity.magnitude > 3)
-            {
-                canSmoke = true;
-            } else
-            {
-                canSmoke = false;
-            }
-            
-            
+            hpImage.fillAmount = hp / startingHP;
+            hpBar.transform.LookAt(Camera.main.transform);
         }
-        else
-        {
-            moving = false;
-            rb.velocity = Vector3.zero;
-            anim.SetBool("Moving", false);
-        }
+    }
 
+    private void PlayerStop()
+    {
+        moving = false;
+        rb.velocity = Vector3.zero;
+        anim.SetBool("Moving", false);
     }
 
     void MeasureSpeed()
@@ -216,7 +231,6 @@ public class PlayerSpecial : MonoBehaviour
 
     public void Shoot()
     {
-        
         var bullet =  Instantiate(weaponHolster.currentWeapon.pistolBullet, weaponHolster.currentWeapon.firePoint.position, weaponHolster.currentWeapon.firePoint.transform.rotation);
         
         if (weaponHolster.currentWeapon.recoil)
@@ -436,11 +450,9 @@ public class PlayerSpecial : MonoBehaviour
         }
       
     }
-    
-    
     public void GainSoul(int soulAmount)
     {
-        
+        //Soul gain
     }
     
     

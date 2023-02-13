@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 
-public class WeaponHolster : MonoBehaviour
+public sealed class WeaponHolster : MonoBehaviour
 {
     public Weapon currentWeapon;
     public GameObject currentUnUsedWeapon;
     [Header("Weapons")] 
     public List<Transform> weapons = new List<Transform>();
-    public List<GameObject> UnUsedWeapons = new List<GameObject>();
+    public List<GameObject> unUsedWeapons = new List<GameObject>();
     [Header("ParticleWeapons")] 
     public ParticleSystem flamethrowerParticle;
     public enum WeaponType
@@ -93,7 +93,7 @@ public class WeaponHolster : MonoBehaviour
         currentWeapon.gameObject.SetActive(true);
     }
 
-    public void SwitchWeapon(int weaponIndex)
+    private void SwitchWeapon(int weaponIndex)
     {
         foreach (var weapon in weapons)
         {
@@ -136,12 +136,12 @@ public class WeaponHolster : MonoBehaviour
 
     private void SetUnUsedWeaponObjects(int weaponIndex)
     {
-        foreach (var unWeapon in UnUsedWeapons)
+        foreach (var unWeapon in unUsedWeapons)
         {
             unWeapon.gameObject.SetActive(false);
         }
         
-        UnUsedWeapons[weaponIndex].gameObject.SetActive(true);
-        currentUnUsedWeapon = UnUsedWeapons[weaponIndex].gameObject;
+        unUsedWeapons[weaponIndex].gameObject.SetActive(true);
+        currentUnUsedWeapon = unUsedWeapons[weaponIndex].gameObject;
     }
 }
